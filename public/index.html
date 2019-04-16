@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+  <meta name="apple-mobile-web-app-title" content="NYSL">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>home-nysl</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="nysl-mobile.css">
+  <link rel="apple-touch-icon" href="apple-touch-icon-iphone.png" />
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- Nav Page -->
+    <div id="nav-page" v-show="activePage=='nav-page'">
+      <div id="nav-head">
+        <button id="close-button" @click="closeNav">&#9747;</button>
+      </div>
+      <div id="nav-body">
+        <button class="nav-link" @click="launchPage('schedule-page');" vbind:class="{'active':previousPage=='landing-page'}">Game Schedule</button>
+        <button class="nav-link" @click="launchPage('location-page');" vbind:class="{'active':previousPage=='location-page'}">Game Locations</button>
+        <button class="nav-link" @click="launchPage('messages-page');" vbind:class="{'active':previousPage=='messages-page'}">Messages</button>
+      </div>
+    </div>
+
+    <!-- schedule-page -->
+    <div id="landing-page" v-if="activePage=='landing-page'">
+
+      <div id="landing-banner">
+        <div id="hero-header-container">
+          <h1 id="hero-header">Northside <br> Youth Soccer <br> League</h1>
+        </div>
+        <div id="hero-picture"></div>
+      </div>
+
+      <div id="schedule-title" ref="scheduleTitle" class="page-header">
+        <h2>Game Schedule</h2>
+        <div id="nav">
+          <button id="hamburger-container" @click="openNav">
+            <img id="hamburger" alt="nav" src="hamburger_icon.png" />
+          </button>
+        </div>
+      </div>
+
+      <button class="filter-header-collapsed" @click=closeFilter v-bind:class="{'filter-header-expanded':!filterCollapsed}">
+        Search by team&nbsp;
+        <span class="filter-arrow" v-if="filterCollapsed"> &#9658; </span>
+        <span class="filter-arrow" v-if="!filterCollapsed"> &#9660; </span>
+      </button>
+      <div id="filter-body" v-if="!filterCollapsed">
+        <div id="checkbox-container" v-for="team in gameInfo.teams">
+          <div class="checkbox-option">
+            <input type="checkbox" :value="team.division + ' ' + team.name" v-model="checkedNames" @click="filterGames();">
+            <label>{{team.division+" "}}{{team.name}}</label>
+          </div>
+        </div>
+      </div>
+
+      <div id="schedule-container">
+        <div v-for="(game,index) in filteredGames" class="game-info">
+          <div class="date bold">
+            {{ game.date }}
+          </div>
+          <div class="time">
+            {{ game.time }}
+          </div>
+          <div class="match">
+            {{ game.team + " vs "}}{{game.opponent}}
+          </div>
+          <div class="game-location">
+            Location: <a v-bind:href="getLocationLink(game.location)" class="location-link">{{ game.location }}<i class="material-icons"> arrow_forward</i></a>
+          </div>
+        </div>
+        <div v-for="(date,index) in dateArray" class="date-info" v-if="filteredGames.length==0">
+          <div class="date-date bold"> {{ date.date }} </div>
+          <div class="time-block">
+            <div class="date-time"> {{ date.morning.time }} </div>
+            <div class="time-info">
+              <div class="time-matches">
+                <div>{{ date.morning.team1 + " vs "}}{{ date.morning.opponent1 }}<br>&nbsp;</div>
+                <div>{{ date.morning.team2 + " vs "}}{{ date.morning.opponent2 }}</div>
+              </div>
+              <div class="date-location collapsed" v-bind:class="[{expanded:expandedMorningDates.includes(index)}]">
+                Location: <br>
+                <a v-bind:href="date.morning.locationLink" class="location-link">{{ date.morning.location }}<i class="material-icons" id="location-link-arrow"> arrow_forward</i></a>
+              </div>
+            </div>
+            <button @click="toggleDateExpansion(index, date.morning.time)">
+              <span class="location-pointer" v-if="!expandedMorningDates.includes(index)">&#9658;</span>
+              <span class="location-pointer" v-if="expandedMorningDates.includes(index)">&#9660;</span>
+            </button>
+          </div>
+          <div class="time-block">
+            <div class="date-time"> {{ date.afternoon.time }} </div>
+            <div class="time-info">
+              <div class="time-matches">
+                <div>{{ date.afternoon.team1 + " vs "}}{{ date.afternoon.opponent1 }}<br>&nbsp;</div>
+                <div>{{ date.afternoon.team2 + " vs "}}{{ date.afternoon.opponent2 }}</div>
+              </div>
+              <div class="date-location collapsed" v-bind:class="[{expanded:expandedAfternoonDates.includes(index)}]">
+                Location: <a v-bind:href="date.afternoon.locationLink" class="location-link">{{ date.afternoon.location }}<i class="material-icons" id="location-link-arrow"> arrow_forward</i></a>
+              </div>
+            </div>
+            <button @click="toggleDateExpansion(index, date.afternoon.time)">
+              <span class="location-pointer" v-if="!expandedAfternoonDates.includes(index)">&#9658;</span>
+              <span class="location-pointer" v-if="expandedAfternoonDates.includes(index)">&#9660;</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Page -->
+    <div id="game-location-page" v-if="activePage=='location-page'">
+      <div class="page-header">
+        <h2>Game Locations</h2>
+        <div id="nav">
+          <button id="hamburger-container" @click="openNav">
+            <img id="hamburger" alt="nav" src="hamburger_icon.png" />
+          </button>
+        </div>
+      </div>
+      <div id="map">
+      </div>
+      <div id="address-container">
+        <div class="location-info" v-for="(location, index) in gameInfo.locations">
+          <button class="pin-button" @click="toggleLocationActivity(index)">
+            <i class="material-icons location" v-bind:class="[{active:selectedLocations.includes(index)}]">place</i>
+          </button>
+          <div class="address">
+            <div class="location-name bold">{{ location.name }}</div>
+            <div class="address-line1">{{ location.streetAddress }}</div>
+            <div class="address-line2">{{ location.city + ", "}}{{ location.state + " "}}{{ location.zip}}</div>
+          </div>
+          <div class="maps-link-container">
+            <a v-bind:href="location.gmapLink">Google<br>Maps</a>
+            <i class="material-icons">arrow_forward</i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Page -->
+    <div id="messages-page" v-if="activePage=='messages-page'">
+
+      <div id="login-container" v-if="!loggedIn">
+        <div id="nav">
+          <button id="hamburger-container" @click="openNav">
+            <img id="hamburger" alt="nav" src="hamburger_icon.png" />
+          </button>
+        </div>
+        <div id="login-button-container">
+          <button id="login" @click="login">Login</button>
+        </div>
+      </div>
+
+      <div class="lds-ellipsis" v-if="showLoader"><div></div><div></div><div></div><div></div></div>
+
+      <div id=logged-in-container v-if="loggedIn">
+        <div id="nav">
+          <button id="hamburger-container" @click="openNav">
+            <img id="hamburger" alt="nav" src="hamburger_icon.png" />
+          </button>
+        </div>
+        <div id="chat-header-container">
+          <div id="chat-header">Team Chat</div>
+          <button id="logout" @click="logout">Logout &#8599;</button>
+        </div>
+        <div id="posts" ref="posts">
+          <div class="post" v-for="message in messages" v-bind:class="{ 'self': (message.email == currentUser), 'other': (message.email != currentUser) }">
+            <div class="avatar">
+              <img :src="message.image" alt="">
+            </div>
+            <div class="messages">
+              <div><span class="name">{{ message.name }}:</span> {{ message.body }}</div>
+            </div>
+          </div>
+        </div>
+        <div id="inputs">
+          <input id="textInput" v-model="text" class="input" type="text" placeholder="Your message...">
+          <button id="create-post" @click="writeNewPost">Send</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/5.9.3/firebase.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyCMUZGaHTrq4HgRYKT1F97A_hxZEs95Qcw",
+      authDomain: "nysl-mobile-project.firebaseapp.com",
+      databaseURL: "https://nysl-mobile-project.firebaseio.com",
+      projectId: "nysl-mobile-project",
+      storageBucket: "nysl-mobile-project.appspot.com",
+      messagingSenderId: "799491380956"
+    };
+    firebase.initializeApp(config);
+  </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZznLfF-Wzyw_eHtHQOTl6TkHJxiQan2c"></script>
+  <script src="main.js"></script>
+
+</body>
+
+</html>
