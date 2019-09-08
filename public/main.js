@@ -42,14 +42,10 @@ const app = new Vue({
           app.initMap();
         })
         .catch(function(error) {
-          console.log(error);
         })
     },
     redirected: function() {
       if(localStorage["currentPage"] == "messages-page"){
-        console.log("local storage current page == messages page")
-        // this.checkIfLoggedIn();
-        // setTimeout(function() {this.activePage="messages-page";}, 3000);
         this.launchPage("messages-page");
       } else {
         this.activePage="landing-page";
@@ -58,7 +54,6 @@ const app = new Vue({
     //nav-Page
     openNav: function() {
       app.previousPage = this.activePage;
-      console.log("previous page: "+ this.previousPage);
       app.activePage = "nav-page";
     },
     closeNav: function() {
@@ -68,7 +63,6 @@ const app = new Vue({
       app.activePage = app.previousPage;
     },
     launchPage:function(page){
-      console.log("launching page");
       if(page == 'schedule-page'){
         this.activePage = "landing-page";
         Vue.nextTick()
@@ -87,12 +81,10 @@ const app = new Vue({
       }
       else if (page == 'messages-page') {
         localStorage["currentPage"]="messages-page";
-        console.log("launching page 2");
         this.activePage = 'messages-page';
         this.showLoader = true;
         this.checkIfLoggedIn();
       }
-      console.log("local storage: " + localStorage.currentPage);
     },
     //schedule-page
     createDateData: function() {
@@ -261,7 +253,6 @@ const app = new Vue({
     // -----Messages Page-----
     checkIfLoggedIn: function() {
       firebase.auth().onAuthStateChanged(function(user){
-        console.log("hehehbjachb")
         if (user != null) {
           app.loggedIn = true;
           app.getPosts();
